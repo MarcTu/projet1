@@ -102,14 +102,10 @@ donnee['date2']=date2
 donnee['heure2']=heure2
 donnee.sort_values(by=['date2','heure2'],ascending=[True,True])
 
-# print(donnee)
 
 
-def trier_date(L):
-    return L
 
-
-def trouver_first_date(date_elementaire):
+def trouver_first_date(date_elementaire):       # Retourne la première index de la date 
     d,h=separer_date(date_elementaire)
     index=0
     while d>date2[index]:
@@ -119,7 +115,7 @@ def trouver_first_date(date_elementaire):
     return index
 
 
-def trouver_last_date(date_elementaire):
+def trouver_last_date(date_elementaire):        # Retourne la dernière index de la date
     d,h=separer_date(date_elementaire)
     index=0
     while d>=date2[index]:
@@ -135,64 +131,123 @@ def trouver_last_date(date_elementaire):
 
 # Courbe :
 
-def Afficher_carbone(start_date='2019-01-01',end_date='2019-02-01'):
+def Afficher_carbone(start_date='2019-08-11',end_date='2019-08-25'):
     i=trouver_first_date(start_date)
     j=trouver_last_date(end_date)
-    x = date[i:j]
-    y = carbone[i:j]
-
-    #plt.subplot(2, 1, 2)
-
-    plt.plot(x, y, '.-')
+    x = date.tolist()[i:j]
+    y = carbone.tolist()[i:j]
+    plt.plot(x, y, '.-',color='black', label="Carbone")
     plt.xlabel('Temps')
     plt.ylabel('Carbone')
     
+    k,j,i=anomalie_list_plusieurs_jour(y,donnee.heure3,x)
+    plt.scatter(i,j,color='red',label="anomalie")
+    
+    plt.legend(bbox_to_anchor=(0.8, 1), loc='upper left', borderaxespad=0.)
     plt.title('Evolution carbone')
     
     plt.show()
     return None
 
 
-def Afficher_temperature(start_date='2019-01-01',end_date='2019-02-01'):
-    x = date
-    y = temperature
-
-    #plt.subplot(2, 1, 2)
-
-    plt.plot(x, y, '.-')
+def Afficher_temperature(start_date='2019-08-11',end_date='2019-08-25'):
+    i=trouver_first_date(start_date)
+    j=trouver_last_date(end_date)
+    x = date.tolist()[i:j]
+    y = temperature.tolist()[i:j]
+    plt.plot(x, y, '.-',color='blue', label="Température")
     plt.xlabel('Temps')
     plt.ylabel('Température')
+    
+    k,j,i=anomalie_list_plusieurs_jour(y,donnee.heure3,x)
+    plt.scatter(i,j,color='red',label="anomalie")
+    
+    plt.legend(bbox_to_anchor=(0.8, 1), loc='upper left', borderaxespad=0.)
     plt.title('Evolution température')
     
     plt.show()
     return None
 
 
-def Afficher_humidite(start_date='2019-01-01',end_date='2019-02-01'):
-    x = date
-    y = hum
+def Afficher_luminosite(start_date='2019-08-11',end_date='2019-08-25'):
+    i=trouver_first_date(start_date)
+    j=trouver_last_date(end_date)
+    x = date.tolist()[i:j]
+    y = donnee.lum.tolist()[i:j]
+    plt.plot(x, y, '.-',color='yellow', label="Luminosité")
+    plt.xlabel('Temps')
+    plt.ylabel('Luminosité')
+    
+    k,j,i=anomalie_list_plusieurs_jour(y,donnee.heure3,x)
+    plt.scatter(i,j,color='red',label="anomalie")
+    
+    plt.legend(bbox_to_anchor=(0.8, 1), loc='upper left', borderaxespad=0.)
+    plt.title('Evolution luminosité')
+    
+    plt.show()
+    return None
+    
 
-    #plt.subplot(2, 1, 2)
+def Afficher_bruit(start_date='2019-08-11',end_date='2019-08-25'):
+    i=trouver_first_date(start_date)
+    j=trouver_last_date(end_date)
+    x = date.tolist()[i:j]
+    y = donnee.noise.tolist()[i:j]
+    plt.plot(x, y, '.-',color='green', label="Bruit")
+    plt.xlabel('Temps')
+    plt.ylabel('Bruit')
+    
+    k,j,i=anomalie_list_plusieurs_jour(y,donnee.heure3,x)
+    plt.scatter(i,j,color='red',label="anomalie")
+    
+    plt.legend(bbox_to_anchor=(0.8, 1), loc='upper left', borderaxespad=0.)
+    plt.title('Evolution bruit')
+    
+    plt.show()
+    return None
 
-    plt.plot(x, y, '.-')
+
+def Afficher_humidite(start_date='2019-08-11',end_date='2019-08-25'):
+    i=trouver_first_date(start_date)
+    j=trouver_last_date(end_date)
+    x = date.tolist()[i:j]
+    y = hum.tolist()[i:j]
+    plt.plot(x, y, '.-',color='cyan', label="Humidité")
     plt.xlabel('Temps')
     plt.ylabel('Humidité')
+    
+    k,j,i=anomalie_list_plusieurs_jour(y,donnee.heure3,x)
+    plt.scatter(i,j,color='red',label="anomalie")
+    
+    plt.legend(bbox_to_anchor=(0.8, 1), loc='upper left', borderaxespad=0.)
     plt.title('Evolution humidité')
     
     plt.show()
     return None
 
 
-def Afficher_courbe(col,start_date='2019-01-01',end_date='2019-02-01'):
-    x = date
-    y = col
-
-    #plt.subplot(2, 1, 2)
-
-    plt.plot(x, y, '.-')
+def Afficher_courbe(start_date='2019-08-11',end_date='2019-08-25'):
+    i=trouver_first_date(start_date)
+    j=trouver_last_date(end_date)
+    x = date.tolist()[i:j]
+    y = carbone.tolist()[i:j]
+    plt.plot(x, y, '.-',color='black', label="Carbone")
+    y2 = temperature.tolist()[i:j]
+    plt.plot(x, y2, '.-',color='blue', label="Température")
+    y3 = donnee.lum.tolist()[i:j]
+    plt.plot(x, y3, '.-',color='yellow', label="Luminosité")
+    y4 = donnee.noise.tolist()[i:j]
+    plt.plot(x, y4, '.-',color='green', label="Bruit")
+    y5 = hum.tolist()[i:j]
+    plt.plot(x, y5, '.-',color='cyan', label="Humidité")
+    
     plt.xlabel('Temps')
-    plt.ylabel('col')
-    plt.title('Evolution ')
+    
+    k,j,i=anomalie_list_plusieurs_jour(y,donnee.heure3,x)
+    plt.scatter(i,j,color='red',label="anomalie")
+    
+    plt.legend(bbox_to_anchor=(0.8, 1), loc='upper left', borderaxespad=0.)
+    plt.title('Donnée entre le '+start_date+' et le '+end_date)
     
     plt.show()
     return None
@@ -514,7 +569,7 @@ def derive(L,T):                # Il faut que len(T)=len(L)>0
     l=[]
     n=len(L)
     for k in range(n-1):
-        x=(float(L[k+1])-float(L[k]))/(float(T[k+1])-float(T[k]))         # divise par T[k+1]-T[k]
+        x=(float(L[k+1])-float(L[k]))/(float(T[k+1])-float(T[k]))
         l.append(x)
     return l
 
@@ -550,7 +605,7 @@ donnee['heure3']=heure3
 
 # Définition de "e", la plus grande variatiion de l'acceleration possible (sans anomalie)
 
-e=500
+e=1000
 
 
 def is_anomalie2(acc,id):          # acc=acceleration(col,date2)
@@ -568,6 +623,19 @@ def anomalie_list(col,T):
             index.append(i)
             value.append(col[i])
     return index,value
+
+
+def anomalie_list_plusieurs_jour(col,T,date):
+    index=[]
+    value=[]
+    D=[]
+    acc=acceleration(col,T)
+    for i in range(len(col)-2):
+        if is_anomalie2(acc,i):
+            index.append(i)
+            value.append(col[i])
+            D.append(date[i])
+    return index,value,D
 
 
 def anomalie_list_une_journee(col,T,heure):
@@ -642,8 +710,9 @@ def Afficher_un_jour_avec_anomalie_carbone(jour):
     if len(str(jour))>8:
         jour,h=separer_date(str(jour))
     jour=int(jour)
+
     carbone_journee,temperature_journee,hum_journee,bruit_journee,lum_journee,date_journee,heure_journee=separer_une_journee(jour)
-    
+
     jour2=jour-20190800
 
     x = [x/10000 for x in heure_journee]
