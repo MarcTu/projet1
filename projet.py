@@ -1,5 +1,8 @@
 import projet1_v3 as p
 import fonctions as f
+import matplotlib.pyplot as plt
+import numpy as np
+from matplotlib.ticker import MultipleLocator, FormatStrFormatter
 
 import sys
 
@@ -9,11 +12,15 @@ start_int=p.separer_date(start)[0]
 end_int=p.separer_date(end)[0]
 
 
+
     # Exit
 
-def sortir():
-    print("\n\n\n____________________________Le_programme_a_été_intérompu____________________________\n\n\n")
-    return exit()
+def sortir(message='Exit'):
+    print("\n\n\n____________________________________________________________________________________")
+    print("\n                            Le programme a été intérompu                            ")
+    print("                     Cause : "+message+"")
+    print("____________________________________________________________________________________\n\n\n")
+    return sys.exit()
 
 
 
@@ -42,10 +49,109 @@ def recup(var):
     elif var=='Bruit':
         return p.donnee.noise
     elif var=='Humidité':
-        return p.donnee.hum
+        return p.donnee.humidity
     elif var=='Humidex':
         return p.donnee.temp, p.donnee.hum
 
+
+def transformer_heure(h):
+    h=h/10000
+    hint=int(h)                 # heure entière
+    h2=(h-hint)*100
+    hmin=int(h2)                # minute
+    h3=(h2-hmin)*100
+    hs=int(h3)                  # seconde
+    h=hint+(hmin/60)+(hs/3600)
+    return h
+
+
+def abscisse(x):            # Transformer '2019-08-17 12:50:26 +2:00' en 12,83
+    D,H=p.separer_date_liste(x)
+    L=[]
+    n=len(D)
+    date=D[0]
+    i=0
+    index=[]
+    m=0
+    
+    for k in range(n):      # Compter le len pour les différents jours, puis rajouter 24 pour le jour d'après
+        if date!=D[k]:
+            date=D[k]
+            index.append(k)
+            i=1
+        else:
+            i+=1
+            
+    for k in range(n):      
+        if k in index:
+            m+=1
+
+        heure=transformer_heure(H[k])+m*24
+        L.append(heure)
+    return L,len(index)+1
+
+
+def Afficher_stat(col,start_date='2019-08-11',end_date='2019-08-25'):
+    i=p.trouver_first_date(start_date)
+    j=p.trouver_last_date(end_date)
+    x = p.date.tolist()[i:j]
+    x,nbr_jour=abscisse(x)  
+
+    majorLocator = MultipleLocator((nbr_jour*24)/8)              # Les grandes graduations de n en n
+    majorFormatter = FormatStrFormatter('%d')
+    minorLocator = MultipleLocator(((nbr_jour*24)/8)/3)          # Les petites graduations de n en n
+
+    y = recup(col)
+    y=y.tolist()[i:j]      
+    fig, ax = plt.subplots()
+    plt.plot(x, y, '.-',color='black', label=str(col))
+    
+    ax.xaxis.set_major_locator(majorLocator)
+    ax.xaxis.set_major_formatter(majorFormatter)
+    ax.xaxis.set_minor_locator(minorLocator)
+    
+    plt.xlabel('Temps (h)')
+    plt.ylabel(str(col))
+    
+    x,maxi=p.ligne(x,f.max_col(y))                               # On ajoute la ligne du max
+    plt.plot(x,maxi, '--', color='lightgrey', label='max/min')
+    
+    x,mini=p.ligne(x,f.min_col(y))                               # On ajoute la ligne du min
+    plt.plot(x,mini, '--',color='lightgrey')
+
+    mean=f.mediane(y)       
+    moy=f.moyenne(y)
+    e=f.ecart_type(y)
+    v=f.variance(y)
+    
+    mean_valeur="{0:.2f}".format(mean)      # "{0:.2f}".format(nombre) permet d'arrondir nombre à deux chiffre après la virgule
+    moy_valeur="{0:.2f}".format(moy) 
+    e_valeur="{0:.2f}".format(e)       
+    v_valeur="{0:.2f}".format(v)
+    
+    x,mean2=p.ligne(x,mean)
+    x,moy2=p.ligne(x,moy)
+    x,e_sup=p.ligne(x,moy+e)
+    x,e_inf=p.ligne(x,moy-e)
+    x,v_sup=p.ligne(x,moy+v)
+    x,v_inf=p.ligne(x,moy-v)
+    
+    plt.plot(x,mean2,color='purple',label='médiane = '+str(mean_valeur))
+    plt.plot(x,moy2,color='red',label='moyenne = '+str(moy_valeur))
+    plt.plot(x,e_sup,color='orange',label='écart-type = '+str(e_valeur))
+    plt.plot(x,e_inf,color='orange')
+    #plt.plot(x,v_sup,color='cyan',label='variance = '+str(v_valeur))
+    #plt.plot(x,v_inf,color='cyan')
+    
+    plt.legend(bbox_to_anchor=(0.75, 1), loc='upper left', borderaxespad=0.)
+    
+    if nbr_jour==1:
+        plt.title("Evolution "+str(col).lower()+" du "+start_date[8:10]+" août 2019\n")
+    else:
+        plt.title("Evolution "+str(col).lower()+" entre le "+start_date[8:10]+" et le "+end_date[8:10]+" août 2019\n")
+    
+    plt.show()
+    return None
 
 
 # Ecrire sous la forme : python MONSCRIPT.py <action> <var> <start_date> <end_date>
@@ -110,6 +216,18 @@ while act_test==None:
     # A présent, l'action est bien défini
     
 
+#_______________________________________________________________________________
+
+
+    # Vérifions qu'on a pas trop d'argument
+
+if action!='Corrélation':
+    if len(sys.argv)>5:
+        sortir("Trop d'arguments (seulement 4 sont attendus)")
+else:
+    if len(sys.argv)>6:
+        sortir("Trop d'arguments (seulement 5 sont attendus)")
+
 
 #_______________________________________________________________________________
 
@@ -130,6 +248,8 @@ Hum=['Humidex','humidex']
 
 VAR_repetition=[CA,TEMP,LUM,BRUIT,HUM,Hum]
 
+
+    # On prépare le message à afficher
 S=''
 n=len(VAR)
 for k in range(n):
@@ -297,8 +417,9 @@ else:
 print("entre le "+start_date+" et le "+end_date+"\n")  
 
 
-input("Press 'entrer' to continu\n")      # Ceci permet d'afficher les messages avant les courbes
-
+entrer=input("Press 'entrer' to continu\n")      # Ceci permet d'afficher les messages avant les courbes
+if entrer=='sortir':
+    sortir()
 
 
 
@@ -318,23 +439,12 @@ if k==1:        # On affiche une courbe
         p.Afficher_humidex(start_date,end_date)
 
 
-elif k==2:        # On affiche une courbe avec les valeurs statistiques
+elif k==2:        # On affiche une courbe avec les valeurs statistiques : min, max, écart-type, moyenne, variance, médiane
 
-    if var=='Carbone':
-        p.Afficher_carbone(start_date,end_date)
-    elif var=='Température':
-        p.Afficher_temperature(start_date,end_date)
-    elif var=='Luminosité':
-        p.Afficher_luminosite(start_date,end_date)
-    elif var=='Bruit':
-        p.Afficher_bruit(start_date,end_date)
-    elif var=='Humidité':
-        p.Afficher_humidite(start_date,end_date)
-    elif var=='Humidex':
-        p.Afficher_humidex(start_date,end_date)
+    Afficher_stat(var,start_date,end_date)
 
 
-elif k==3:
+elif k==3:       # On affiche une courbe avec les deux variables avec leur indice de corrélation
     # On récupère la colonne de la variable
     
     col1=recup(var1)
@@ -342,14 +452,7 @@ elif k==3:
     
     corr=f.correlation(col1,col2)
     print("\nL'indice de corrélation entre "+var1+" et "+var2+" est :\n          "+str(corr))
-    p.Afficher_humidex(col1,col2,start_date,end_date)
-
-
-
-
-
-
-
+    p.Afficher_correlation(col1,col2,start_date,end_date)
 
 
 
@@ -362,10 +465,10 @@ elif k==3:
 
     # Lorsque le script se termine, il est important de l'indiquer
 
-print("\n\n\n________________________________________Fin________________________________________\n\n\n")
 
-
-
+print("\n\n\n____________________________________________________________________________________")
+print("\n                                          FIN                                          ")
+print("____________________________________________________________________________________\n\n\n")
 
 
 
