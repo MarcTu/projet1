@@ -404,8 +404,8 @@ elif k==2:        # On affiche une courbe avec les valeurs statistiques : min, m
 elif k==3:       # On affiche une courbe avec les deux variables avec leur indice de corrélation
     # On récupère la colonne de la variable
     
-    col1=recup(var1)
-    col2=recup(var2)
+    col1=p.recup(var1)
+    col2=p.recup(var2)
     
     corr=f.correlation(col1,col2)
     print("\nL'indice de corrélation entre "+var1+" et "+var2+" est :\n          "+str(corr))
