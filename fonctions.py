@@ -50,6 +50,27 @@ def abs(x):
     else:
         return -x
 
+#____________________________________________________________
+
+
+# Max / Min d'une liste:
+
+def max_col(col):
+    max=col[0]
+    for x in col:
+        if x>max:
+            max=x
+    return max
+        
+
+def min_col(col):
+    min=col[0]
+    for x in col:
+        if x<min:
+            min=x
+    return min
+
+
 
 #____________________________________________________________
 
@@ -124,6 +145,27 @@ def quickSort(T):
     
     return T
 
+    
+    # Tri fusion
+
+def fusion(T1,T2) :
+    if T1==[] :
+        return T2
+    if T2==[] :
+        return T1
+    if T1[0]<T2[0] :
+        return [T1[0]]+fusion(T1[1:],T2)
+    else :
+        return [T2[0]]+fusion(T1,T2[1:])
+
+
+def trifusion(T) :
+    if len(T)<=1 :
+        return T
+    T1=[T[x] for x in range(len(T)//2)]
+    T2=[T[x] for x in range(len(T)//2,len(T))]
+    return fusion(trifusion(T1),trifusion(T2))
+
 
 #____________________________________________________________
 
@@ -146,7 +188,7 @@ def mediane(l):
     if n%2==0:
         a=l[n//2]
         b=l[(n//2)+1]
-        madiane=moyenne((a,b))
+        mediane=moyenne((a,b))
     else:
         mediane=l[n//2]
     return mediane
@@ -159,8 +201,23 @@ def variance(l):        # E(x**2)-E(x)**2
     for x in l:
         Lcarree.append(x**2)
     moyen_carree=moyenne(Lcarree)
-    var=moyen_carree-moyen
+    var=moyen_carree-moyen**2
     return var
+
+
+def covariance(X,Y):
+    n=len(X)
+    m=len(Y)
+    if n!=m:
+        return None
+    S=0
+    x=moyenne(X)
+    y=moyenne(Y)
+    for i in range(n):
+        S+=X[i]*Y[i]
+    S=S/n
+    covar=S-x*y
+    return covar
 
 
 def ecart_type(l):
@@ -173,20 +230,60 @@ def ecart_type(l):
 
 # Indice humidex :
 
-def humidex_unite(Tair,Trosee):
-    e=exp(5417.7530*((1/273.16)-(1/(273.15+Trosee))))
-    H=Tair+0.5555*(6.11*e-10)
+
+def humidex_unite(Tair,hum):
+    H=Tair+(5/9)*(6.112*10**(7.5*Tair/(237.7+Tair))*(hum/100)-10)
     return H
 
 
-def humidex(start_date='2019-01-01',end_date='2019-02-01'):
-    # Pour annee entre annee_date, pour mois entre moi_date, pour jour entre jour_date
-    
-    Tair, Trosee=20,20
-    
-    H=humidex_unite(Tair,Trosee)
-    
+def humidex(temp,hum,start_date,end_date):
+    H=[]
+    i=trouver_first_date(start_date)
+    j=trouver_last_date(end_date)
+    temp,hum=temp[i:j],hum[i:j]
+    n=len(temp)
+    for k in range(n):
+        H.append(humidex_unite(temps[k],hum[k]))
+    H=humidex_unite(temperature,Trosee)
     return H
+    
+    
+
+#____________________________________________________________
+
+
+# Indice de corrélation :
+
+def correlation(X,Y):
+    cov=covariance(X,Y)
+    var_x=variance(X)
+    var_y=variance(Y)
+    r= cov/((var_x*var_y)**(1/2))
+    return r
+
+
+def Afficher_correlation(X,Y):
+    r=correlation(X,Y)
+    print("L'indice de corrélation est :")
+    print(r)
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 
