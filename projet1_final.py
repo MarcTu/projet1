@@ -553,11 +553,11 @@ def Afficher_stat(col,start_date='2019-08-11',end_date='2019-08-25'):
 
 
 def Afficher_correlation(col1,col2,start_date,end_date):
-    i=p.trouver_first_date(start_date)
-    j=p.trouver_last_date(end_date)
+    i=trouver_first_date(start_date)
+    j=trouver_last_date(end_date)
     donnee1=recup(col1)
     donnee2=recup(col2)
-    x = p.date.tolist()[i:j]
+    x = date.tolist()[i:j]
     y = donnee1.tolist()[i:j]
     x,nbr_jour=abscisse(x)  
 
