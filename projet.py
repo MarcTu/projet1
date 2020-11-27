@@ -1,15 +1,10 @@
-import projet1_v3 as p
 import fonctions as f
+import projet1_final as p
 import matplotlib.pyplot as plt
 import numpy as np
 from matplotlib.ticker import MultipleLocator, FormatStrFormatter
 
 import sys
-
-
-start,end='2019-08-11','2019-08-25'
-start_int=p.separer_date(start)[0]
-end_int=p.separer_date(end)[0]
 
 
 
@@ -23,7 +18,7 @@ def sortir(message='Exit'):
     return sys.exit()
 
 
-
+    # Fonction pour vérifier la date
 
 def bonne_date(date,endroit):
     date=p.completer_date(date,10)
@@ -39,59 +34,30 @@ def bonne_date(date,endroit):
 
 
 
-def recup(var):
-    if var=='Carbone':
-        return p.donnee.co2
-    elif var=='Température':
-        return p.donnee.temp
-    elif var=='Luminosité':
-        return p.donnee.lum
-    elif var=='Bruit':
-        return p.donnee.noise
-    elif var=='Humidité':
-        return p.donnee.humidity
-    elif var=='Humidex':
-        return p.donnee.temp, p.donnee.hum
+#____________________________________________________________
 
 
-def transformer_heure(h):
-    h=h/10000
-    hint=int(h)                 # heure entière
-    h2=(h-hint)*100
-    hmin=int(h2)                # minute
-    h3=(h2-hmin)*100
-    hs=int(h3)                  # seconde
-    h=hint+(hmin/60)+(hs/3600)
-    return h
+# Indice humidex :
 
 
-def abscisse(x):            # Transformer '2019-08-17 12:50:26 +2:00' en 12,83
-    D,H=p.separer_date_liste(x)
-    L=[]
-    n=len(D)
-    date=D[0]
-    i=0
-    index=[]
-    m=0
-    
-    for k in range(n):      # Compter le len pour les différents jours, puis rajouter 24 pour le jour d'après
-        if date!=D[k]:
-            date=D[k]
-            index.append(k)
-            i=1
-        else:
-            i+=1
-            
-    for k in range(n):      
-        if k in index:
-            m+=1
-
-        heure=transformer_heure(H[k])+m*24
-        L.append(heure)
-    return L,len(index)+1
+def humidex_unite(Tair,hum):
+    H=Tair+(5/9)*(6.112*10**(7.5*Tair/(237.7+Tair))*(hum/100)-10)
+    return H
 
 
-def Afficher_stat(col,start_date='2019-08-11',end_date='2019-08-25'):
+def humidex(temp,hum,start_date,end_date):
+    H=[]
+    i=p.trouver_first_date(start_date)
+    j=p.trouver_last_date(end_date)
+    temp,hum=temp[i:j],hum[i:j]
+    n=len(temp)
+    for k in range(n):
+        H.append(humidex_unite(temp[k],hum[k]))
+    return H
+
+
+
+def Afficher_humidex(humidex,start_date,end_date):
     i=p.trouver_first_date(start_date)
     j=p.trouver_last_date(end_date)
     x = p.date.tolist()[i:j]
@@ -101,57 +67,45 @@ def Afficher_stat(col,start_date='2019-08-11',end_date='2019-08-25'):
     majorFormatter = FormatStrFormatter('%d')
     minorLocator = MultipleLocator(((nbr_jour*24)/8)/3)          # Les petites graduations de n en n
 
-    y = recup(col)
-    y=y.tolist()[i:j]      
+    y = humidex 
     fig, ax = plt.subplots()
-    plt.plot(x, y, '.-',color='black', label=str(col))
+    plt.plot(x, y, '.-',color='black', label="Indice humidex")
     
     ax.xaxis.set_major_locator(majorLocator)
     ax.xaxis.set_major_formatter(majorFormatter)
     ax.xaxis.set_minor_locator(minorLocator)
     
     plt.xlabel('Temps (h)')
-    plt.ylabel(str(col))
+    plt.ylabel('Humidex')
     
-    x,maxi=p.ligne(x,f.max_col(y))                               # On ajoute la ligne du max
-    plt.plot(x,maxi, '--', color='lightgrey', label='max/min')
+    (xmin, xmax, ymin, ymax)=plt.axis()
     
-    x,mini=p.ligne(x,f.min_col(y))                               # On ajoute la ligne du min
-    plt.plot(x,mini, '--',color='lightgrey')
-
-    mean=f.mediane(y)       
-    moy=f.moyenne(y)
-    e=f.ecart_type(y)
-    v=f.variance(y)
+    x,inconfort1=p.ligne(x,15)                                  # On rajoute les seuils d'inconfort
+    x,inconfort2=p.ligne(x,30)
     
-    mean_valeur="{0:.2f}".format(mean)      # "{0:.2f}".format(nombre) permet d'arrondir nombre à deux chiffre après la virgule
-    moy_valeur="{0:.2f}".format(moy) 
-    e_valeur="{0:.2f}".format(e)       
-    v_valeur="{0:.2f}".format(v)
-    
-    x,mean2=p.ligne(x,mean)
-    x,moy2=p.ligne(x,moy)
-    x,e_sup=p.ligne(x,moy+e)
-    x,e_inf=p.ligne(x,moy-e)
-    x,v_sup=p.ligne(x,moy+v)
-    x,v_inf=p.ligne(x,moy-v)
-    
-    plt.plot(x,mean2,color='purple',label='médiane = '+str(mean_valeur))
-    plt.plot(x,moy2,color='red',label='moyenne = '+str(moy_valeur))
-    plt.plot(x,e_sup,color='orange',label='écart-type = '+str(e_valeur))
-    plt.plot(x,e_inf,color='orange')
-    #plt.plot(x,v_sup,color='cyan',label='variance = '+str(v_valeur))
-    #plt.plot(x,v_inf,color='cyan')
+    if ymax>30 and ymin<15:
+        plt.fill_between(x,inconfort2,p.ligne(x,ymax)[1],hatch="///",edgecolor="r",facecolor='white',label="Zone d'inconfort")     
+        plt.fill_between(x,inconfort1,p.ligne(x,ymin)[1],hatch="///",edgecolor="r",facecolor='white')     
+    else:
+        if ymax>30:
+            plt.fill_between(x,inconfort2,p.ligne(x,ymax)[1],hatch="///",edgecolor="r",facecolor='white',label="Zone d'inconfort")     
+        if ymin<15:
+            plt.fill_between(x,inconfort1,p.ligne(x,ymin)[1],hatch="///",edgecolor="r",facecolor='white',label="Zone d'inconfort")     
     
     plt.legend(bbox_to_anchor=(0.75, 1), loc='upper left', borderaxespad=0.)
     
     if nbr_jour==1:
-        plt.title("Evolution "+str(col).lower()+" du "+start_date[8:10]+" août 2019\n")
+        plt.title("Evolution de l'indice humidex du "+start_date[8:10]+" août 2019\n")
     else:
-        plt.title("Evolution "+str(col).lower()+" entre le "+start_date[8:10]+" et le "+end_date[8:10]+" août 2019\n")
+        plt.title("Evolution de l'indice humidex entre le "+start_date[8:10]+" et le "+end_date[8:10]+" août 2019\n")
     
     plt.show()
     return None
+
+
+
+#____________________________________________________________
+
 
 
 # Ecrire sous la forme : python MONSCRIPT.py <action> <var> <start_date> <end_date>
@@ -436,12 +390,15 @@ if k==1:        # On affiche une courbe
     elif var=='Humidité':
         p.Afficher_humidite(start_date,end_date)
     elif var=='Humidex':
-        p.Afficher_humidex(start_date,end_date)
+        temp=p.donnee.temp.tolist()
+        hum=p.donnee.humidity.tolist()
+        humidex=humidex(temp,hum,start_date,end_date)
+        Afficher_humidex(humidex,start_date,end_date)
 
 
 elif k==2:        # On affiche une courbe avec les valeurs statistiques : min, max, écart-type, moyenne, variance, médiane
 
-    Afficher_stat(var,start_date,end_date)
+    p.Afficher_stat(var,start_date,end_date)
 
 
 elif k==3:       # On affiche une courbe avec les deux variables avec leur indice de corrélation
@@ -452,7 +409,7 @@ elif k==3:       # On affiche une courbe avec les deux variables avec leur indic
     
     corr=f.correlation(col1,col2)
     print("\nL'indice de corrélation entre "+var1+" et "+var2+" est :\n          "+str(corr))
-    p.Afficher_correlation(col1,col2,start_date,end_date)
+    p.Afficher_correlation(var1,var2,start_date,end_date)
 
 
 
