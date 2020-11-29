@@ -87,7 +87,7 @@ def separer_date_liste_num(date_liste):
     L=[]
     n=len(date_liste)
     for k in range(n):
-        l=separer_date(date_liste[k])
+        l,h=separer_date(date_liste[k])
         num=[k]
         num.append(l)
         L.append(num)
@@ -146,6 +146,7 @@ def Afficher_carbone(start_date='2019-01-01',end_date='2019-02-01'):
     plt.plot(x, y, '.-')
     plt.xlabel('Temps')
     plt.ylabel('Carbone')
+    
     plt.title('Evolution carbone')
     
     plt.show()
@@ -390,7 +391,7 @@ def separer_une_journee(jour):
     bruit_journee=donnee_une_journee.noise.tolist()
     lum_journee=donnee_une_journee.lum.tolist()
     date_journee=donnee_une_journee.date2
-    heure_journee=donnee_une_journee.heure2
+    heure_journee=donnee_une_journee.heure2.tolist()
     
     return carbone_journee,temperature_journee,hum_journee,bruit_journee,lum_journee,date_journee,heure_journee
 
@@ -504,13 +505,16 @@ def Afficher_anomalie(col,start_date='2019-08-11',end_date='2019-08-25'):
 
 
 
+
+
+
 # Dérive :
 
 def derive(L,T):                # Il faut que len(T)=len(L)>0
     l=[]
     n=len(L)
     for k in range(n-1):
-        x=(float(L[k+1])-float(L[k]))         # divise par T[k+1]-T[k]
+        x=(float(L[k+1])-float(L[k]))/(float(T[k+1])-float(T[k]))         # divise par T[k+1]-T[k]
         l.append(x)
     return l
 
@@ -524,9 +528,29 @@ def acceleration(L,T):
     return vitesse(vitesse(L,T),T[0:n])
 
 
+# Heure :
+
+def Heure(H):
+    heure=[]
+    for h in H:
+        h=h/10000
+        hint=int(h)                 # heure entière
+        h2=(h-hint)*100
+        hmin=int(h2)                # minute
+        h3=(h2-hmin)*100
+        hs=int(h3)                  # seconde
+        h=hint+(hmin/60)+(hs/3600)
+        heure.append(h)
+    return heure
+
+
+heure3=Heure(donnee.heure2)
+donnee['heure3']=heure3
+
+
 # Définition de "e", la plus grande variatiion de l'acceleration possible (sans anomalie)
 
-e=100
+e=500
 
 
 def is_anomalie2(acc,id):          # acc=acceleration(col,date2)
@@ -537,12 +561,31 @@ def is_anomalie2(acc,id):          # acc=acceleration(col,date2)
 
 def anomalie_list(col,T):
     index=[]
+    value=[]
     acc=acceleration(col,T)
     for i in range(len(col)-2):
         if is_anomalie2(acc,i):
             index.append(i)
-    return index
+            value.append(col[i])
+    return index,value
 
+
+def anomalie_list_une_journee(col,T,heure):
+    index=[]
+    value=[]
+    h=[]
+    acc=acceleration(col,T)
+    for i in range(len(col)-2):
+        if is_anomalie2(acc,i):
+            index.append(i)
+            value.append(col[i])
+            h.append(heure[i])
+    return index,value,h
+
+
+#_______________________________________________________________________________
+
+# Inutile : Enlever les anomalies
 
 def drop_anomalie(col,T):
     index=anomalie_list(col,T)
@@ -560,19 +603,15 @@ def drop_anomalie_donnee(L):        # L = donnee
     return None
 
 
-drop_anomalie_donnee(donnee)
+#_______________________________________________________________________________
 
 
-def Afficher_un_jour_sans_anomalie(jour):
+def Afficher_un_jour_avec_anomalie(jour):
     if len(str(jour))>8:
         jour,h=separer_date(str(jour))
     jour=int(jour)
     carbone_journee,temperature_journee,hum_journee,bruit_journee,lum_journee,date_journee,heure_journee=separer_une_journee(jour)
-    carbone_journee=drop_anomalie(carbone_journee,date_journee)
-    temperature_journee=drop_anomalie(temperature_journee,date_journee)
-    hum_journee=drop_anomalie(hum_journee,date_journee)
-    bruit_journee=drop_anomalie(bruit_journee,date_journee)
-    lum_journee=drop_anomalie(lum_journee,date_journee)
+    
     jour2=jour-20190800
 
     x = [x/10000 for x in heure_journee]
@@ -583,10 +622,14 @@ def Afficher_un_jour_sans_anomalie(jour):
     y5 = lum_journee
     
     plt.plot(x, y,color='black',label="carbone")
-    plt.plot(x, y2,color='red',label="température")
+    plt.plot(x, y2,color='blue',label="température")
     plt.plot(x, y3,color='green',label="bruit")
     plt.plot(x, y4,color='cyan',label="humidité")
     plt.plot(x, y5,color='yellow',label="luminosité")
+    
+    k,j,i=anomalie_list_une_journee(lum_journee,donnee.heure3,heure_journee)
+    i=[x/10000 for x in i]
+    plt.scatter(i,j,color='red',label="anomalie")
     
     plt.xlabel('Temps')
     plt.title('Donnée de la journee du '+str(jour2)+' août 2019')
@@ -595,7 +638,27 @@ def Afficher_un_jour_sans_anomalie(jour):
     return None
 
 
+def Afficher_un_jour_avec_anomalie_carbone(jour):
+    if len(str(jour))>8:
+        jour,h=separer_date(str(jour))
+    jour=int(jour)
+    carbone_journee,temperature_journee,hum_journee,bruit_journee,lum_journee,date_journee,heure_journee=separer_une_journee(jour)
+    
+    jour2=jour-20190800
 
+    x = [x/10000 for x in heure_journee]
+    y = carbone_journee
+    plt.plot(x, y,color='black',label="carbone")
+    
+    k,j,i=anomalie_list_une_journee(carbone_journee,donnee.heure3,heure_journee)
+    i=[x/10000 for x in i]
+    plt.scatter(i,j,color='red',label="anomalie")
+    
+    plt.xlabel('Temps')
+    plt.title('Donnée de la journee du '+str(jour2)+' août 2019')
+    plt.legend(bbox_to_anchor=(0.8, 1), loc='upper left', borderaxespad=0.)
+    plt.show()
+    return None
 
 
 

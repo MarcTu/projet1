@@ -37,81 +37,11 @@ def bonne_date(date,endroit):
 #____________________________________________________________
 
 
-# Indice humidex :
-
-
-def humidex_unite(Tair,hum):
-    H=Tair+(5/9)*(6.112*10**(7.5*Tair/(237.7+Tair))*(hum/100)-10)
-    return H
-
-
-def humidex(temp,hum,start_date,end_date):
-    H=[]
-    i=p.trouver_first_date(start_date)
-    j=p.trouver_last_date(end_date)
-    temp,hum=temp[i:j],hum[i:j]
-    n=len(temp)
-    for k in range(n):
-        H.append(humidex_unite(temp[k],hum[k]))
-    return H
-
-
-
-def Afficher_humidex(humidex,start_date,end_date):
-    i=p.trouver_first_date(start_date)
-    j=p.trouver_last_date(end_date)
-    x = p.date.tolist()[i:j]
-    x,nbr_jour=abscisse(x)  
-
-    majorLocator = MultipleLocator((nbr_jour*24)/8)              # Les grandes graduations de n en n
-    majorFormatter = FormatStrFormatter('%d')
-    minorLocator = MultipleLocator(((nbr_jour*24)/8)/3)          # Les petites graduations de n en n
-
-    y = humidex 
-    fig, ax = plt.subplots()
-    plt.plot(x, y, '.-',color='black', label="Indice humidex")
-    
-    ax.xaxis.set_major_locator(majorLocator)
-    ax.xaxis.set_major_formatter(majorFormatter)
-    ax.xaxis.set_minor_locator(minorLocator)
-    
-    plt.xlabel('Temps (h)')
-    plt.ylabel('Humidex')
-    
-    (xmin, xmax, ymin, ymax)=plt.axis()
-    
-    x,inconfort1=p.ligne(x,15)                                  # On rajoute les seuils d'inconfort
-    x,inconfort2=p.ligne(x,30)
-    
-    if ymax>30 and ymin<15:
-        plt.fill_between(x,inconfort2,p.ligne(x,ymax)[1],hatch="///",edgecolor="r",facecolor='white',label="Zone d'inconfort")     
-        plt.fill_between(x,inconfort1,p.ligne(x,ymin)[1],hatch="///",edgecolor="r",facecolor='white')     
-    else:
-        if ymax>30:
-            plt.fill_between(x,inconfort2,p.ligne(x,ymax)[1],hatch="///",edgecolor="r",facecolor='white',label="Zone d'inconfort")     
-        if ymin<15:
-            plt.fill_between(x,inconfort1,p.ligne(x,ymin)[1],hatch="///",edgecolor="r",facecolor='white',label="Zone d'inconfort")     
-    
-    plt.legend(bbox_to_anchor=(0.75, 1), loc='upper left', borderaxespad=0.)
-    
-    if nbr_jour==1:
-        plt.title("Evolution de l'indice humidex du "+start_date[8:10]+" août 2019\n")
-    else:
-        plt.title("Evolution de l'indice humidex entre le "+start_date[8:10]+" et le "+end_date[8:10]+" août 2019\n")
-    
-    plt.show()
-    return None
-
-
-
-#____________________________________________________________
-
-
 
 # Ecrire sous la forme : python MONSCRIPT.py <action> <var> <start_date> <end_date>
 
 print("Ce script permet d'effectuer une action pour une variable en fonction du temps sur la plage voulue \n(sans les dates précisées, la plage sera automatiquement prise entre le '2019-08-11' et le '2019-08-25')\n")
-print("Pour cela, veuillez écrire sous la forme : \n   python projet.py <action> <variable> <date de début> <date de début>")
+print("Pour cela, veuillez écrire sous la forme : \n   python projet.py <action> <variable> <date de début> <date de fin>")
 print("En cas de bug, pour quitter le programme, tapez 'sortir'\n")
 
 
@@ -125,8 +55,7 @@ print("En cas de bug, pour quitter le programme, tapez 'sortir'\n")
 try:
     action=sys.argv[1]
 except Exception:
-    print("Il manque une action")
-    sortir()
+    sortir("Il manque une action")
 
 
     # On défini la liste d'action qui existe (Ainsi, on poura en rajouter ou en enlever)
@@ -247,8 +176,7 @@ if action!='Corrélation':
     try:
         var=sys.argv[2]
     except Exception:
-        print("Il manque une variable")
-        sortir()
+        sortir("Il manque une variable")
     var=def_var(var)
     k=3                         # k est l'indice de la prochaine variable à entrer dans le cmd
 
@@ -257,14 +185,12 @@ else:
     try:
         var1=sys.argv[2]
     except Exception:
-        print("Il manque un couple de variable")
-        sortir()
+        sortir("Il manque un couple de variable")
     var1=def_var(var1)
     try:
         var2=sys.argv[3]
     except Exception:
-        print("Il manque la seconde variable")
-        sortir()
+        sortir("Il manque la seconde variable")
     var2=def_var(var2)
     k=4
     
@@ -364,59 +290,53 @@ if action=='Display':
     print("\nBut : Afficher l'évolution de "+var)
 elif action=='DisplayStat':
     k=2
-    print("\nBut : Afficher la courbe de "+var+" avec des valeurs statiqtiques")
+    print("\nBut : Afficher la courbe de "+var+" avec des valeurs statistiques")
 else:
     k=3
     print("\nBut : Calculer la corrélation entre "+var1+" et "+var2)
 print("entre le "+start_date+" et le "+end_date+"\n")  
 
 
-entrer=input("Press 'entrer' to continu\n")      # Ceci permet d'afficher les messages avant les courbes
+entrer=input("Tapez 1, pour voir les anomalies\nSinon, press 'entrer' pour continuer\n     ")      
+    # Ceci permet d'afficher les messages avant de charger les courbes
 if entrer=='sortir':
     sortir()
 
 
 
-if k==1:        # On affiche une courbe
-
-    if var=='Carbone':
-        p.Afficher_carbone(start_date,end_date)
-    elif var=='Température':
-        p.Afficher_temperature(start_date,end_date)
-    elif var=='Luminosité':
-        p.Afficher_luminosite(start_date,end_date)
-    elif var=='Bruit':
-        p.Afficher_bruit(start_date,end_date)
-    elif var=='Humidité':
-        p.Afficher_humidite(start_date,end_date)
-    elif var=='Humidex':
-        temp=p.donnee.temp.tolist()
-        hum=p.donnee.humidity.tolist()
-        humidex=humidex(temp,hum,start_date,end_date)
-        Afficher_humidex(humidex,start_date,end_date)
-
-
-elif k==2:        # On affiche une courbe avec les valeurs statistiques : min, max, écart-type, moyenne, variance, médiane
-
-    p.Afficher_stat(var,start_date,end_date)
-
-
-elif k==3:       # On affiche une courbe avec les deux variables avec leur indice de corrélation
-    # On récupère la colonne de la variable
+if k==1:        # Ici, on affiche une courbe
+    if entrer!='1':         # Sans les anomalies
+        if var=='Carbone':
+            p.Afficher_carbone(start_date,end_date)
+        elif var=='Température':
+            p.Afficher_temperature(start_date,end_date)
+        elif var=='Luminosité':
+            p.Afficher_luminosite(start_date,end_date)
+        elif var=='Bruit':
+            p.Afficher_bruit(start_date,end_date)
+        elif var=='Humidité':
+            p.Afficher_humidite(start_date,end_date)
+        elif var=='Humidex':
+            temp=p.donnee.temp.tolist()
+            hum=p.donnee.humidity.tolist()
+            humidex=p.humidex(temp,hum,start_date,end_date)
+            p.Afficher_humidex(humidex,start_date,end_date)
+    else:               # Affichage des courbes avec anomalies
+        p.Afficher_colonne_avec_anomalie_n(var,start_date,end_date)
     
+elif k==2:        # Ici, on affiche une courbe avec les valeurs statistiques : min, max, écart-type, moyenne, variance, médiane
+    p.Afficher_stat(var,start_date,end_date,entrer=='1')
+    
+    
+elif k==3:       # Ici, on affiche une courbe avec les deux variables avec leur indice de corrélation
+    # On récupère la colonne de la variable
     col1=p.recup(var1)
     col2=p.recup(var2)
-    
+        
     corr=f.correlation(col1,col2)
-    print("\nL'indice de corrélation entre "+var1+" et "+var2+" est :\n          "+str(corr))
-    p.Afficher_correlation(var1,var2,start_date,end_date)
 
-
-
-
-
-
-
+    print("\nL'indice de corrélation entre "+var1+" et "+var2+" sur toute la période vaut :\n          "+str(corr))
+    p.Afficher_correlation(var1,var2,start_date,end_date,entrer=='1')
 
 
 
