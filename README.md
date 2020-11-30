@@ -1,4 +1,4 @@
-Le script à executer est 'projet.py'
+Le script à exécuter est 'projet.py'
 
 Il prend en module 'fonctions.py' et 'projet1_final.py'
 
