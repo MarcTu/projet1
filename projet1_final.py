@@ -8,6 +8,8 @@ import matplotlib.pyplot as plt
 
 donnee = pd.read_csv("post-32566-EIVP_KM.csv", sep=';')
 
+    # On récupère des données :
+    
 temperature=donnee['temp']
 hum=donnee['humidity']
 carbone=donnee['co2']
@@ -15,7 +17,12 @@ lum=donnee['lum']
 bruit=donnee['noise']
 date=donnee['sent_at']
 
-
+donnee1=donnee[ donnee['id'] == 1 ]
+donnee2=donnee[ donnee['id'] == 2 ]
+donnee3=donnee[ donnee['id'] == 3 ]
+donnee4=donnee[ donnee['id'] == 4 ]
+donnee5=donnee[ donnee['id'] == 5 ]
+donnee6=donnee[ donnee['id'] == 6 ]
 
 #_______________________________________________________________________________
 
@@ -60,44 +67,62 @@ donnee['date2']=date2
 donnee['heure2']=heure2
 
 
+
+def trouver_first_date(date_elementaire,date_list):       # Retourne la première index de la date 
+    d=transformer_date(date_elementaire)                  # Si on prend tout le tableau donnee, date_list=date2
+    index=0                                               # Sinon, on prend date_list=new_date(donneei.sent_at)
+    while d>date_list[index]:
+        index+=1
+        if index==len(date2):
+            break
+    return index
+
+
+def trouver_last_date(date_elementaire,date_list):        # Retourne la dernière index de la date
+    d=transformer_date(date_elementaire)                  # Si on prend tout le tableau donnee, date_list=date2
+    index=0                                               # Sinon, on prend date_list=new_date(donneei.sent_at)
+    while d>=date_list[index]:
+        index+=1
+        if index==len(date_list):
+            break
+    return index
+
+
 # Transformation en heure pour l'affichage des abscisses :
+
+def transformer_heure(h):
+    h=h/10000
+    hint=int(h)                 # heure entière
+    h2=(h-hint)*100
+    hmin=int(h2)                # minute
+    h3=(h2-hmin)*100
+    hs=int(h3)                  # seconde
+    h=hint+(hmin/60)+(hs/3600)
+    return h
+
 
 def Heure(H):
     heure=[]
     for h in H:
-        h=h/10000
-        hint=int(h)                 # heure entière
-        h2=(h-hint)*100
-        hmin=int(h2)                # minute
-        h3=(h2-hmin)*100
-        hs=int(h3)                  # seconde
-        h=hint+(hmin/60)+(hs/3600)
-        heure.append(h)
+        heure.append(transformer_heure(h))
     return heure
 
 
+def abscisse(x):            # Transformer '2019-08-17 12:50:26 +2:00' en 12,83
+    if x==[]:
+        return x,0
+    D,H=new_date(x),new_heure(x)
+    L=[]
+    n=len(D)
+    date=D[0]
+    nbr_jour=int(D[n-1])-date+1
+    for k in range(n):      
+        heure=transformer_heure(H[k])+24*(D[k]-date)
+        L.append(heure)
+    return L,nbr_jour
+
 heure3=Heure(donnee.heure2)
 donnee['heure3']=heure3
-
-
-def trouver_first_date(date_elementaire):       # Retourne la première index de la date 
-    d=transformer_date(date_elementaire)
-    index=0
-    while d>date2[index]:
-        index+=1
-        if index==len(date2):
-            break
-    return index
-
-
-def trouver_last_date(date_elementaire):        # Retourne la dernière index de la date
-    d=transformer_date(date_elementaire)
-    index=0
-    while d>=date2[index]:
-        index+=1
-        if index==len(date2):
-            break
-    return index
 
 
 #_______________________________________________________________________________
@@ -137,10 +162,9 @@ def trier_heure2(L,heure_list):           # heure_list est la liste avec laquell
                 swap(x,i,y,i+1,L)
 
 
-
 def trier_heure(L,date_elementaire,heure):            # On utilise le fait que tableau est déjà trié avec la date
-    i=trouver_first_date(str(date_elementaire))
-    j=trouver_last_date(str(date_elementaire))
+    i=trouver_first_date(str(date_elementaire),date2)
+    j=trouver_last_date(str(date_elementaire),date2)
     for k in range(len(L)):
         trier_heure2(L[k][i:j],heure[i:j])
 
@@ -173,14 +197,19 @@ def Trier_tableau(L,date,heure):           # L est le tableau des données
     L=transformer_en_dataframe(l,L)
     return L
 
-
-# On pourrait executer la fonction Trier_tableau :
-#donnee=Trier_tableau(donnee,date2,heure2)
-# Mais elle est très lente (2.3min avec le module time)
+"""import time as time
+d=time.time()
+On pourrait executer la fonction Trier_tableau :
+donnee=Trier_tableau(donnee,date2,heure2)
+print(time.time()-d)
+# Mais elle est très lente (1.47min avec le module time), même si elle est plus rapide qu'avant (2.3min)"""
 
 # On privilégira :
-donnee.sort_values(by=['date2','heure2'])          
+donnee=donnee.sort_values(by=['date2','heure2'])          
 # environ 0.0127s
+
+
+
 
 
 #_______________________________________________________________________________
@@ -191,13 +220,13 @@ donnee.sort_values(by=['date2','heure2'])
 def Afficher_carbone(start_date='2019-08-11',end_date='2019-08-25'):
     i=trouver_first_date(start_date)
     j=trouver_last_date(end_date)
-    x = date.tolist()[i:j]
+    x = donnee.sent_at.tolist()[i:j]
     y = carbone.tolist()[i:j]
     x,nbr_jour=abscisse(x)  
 
     majorLocator = MultipleLocator((nbr_jour*24)/8)              # Les grandes graduations de n en n
     majorFormatter = FormatStrFormatter('%d')
-    minorLocator = MultipleLocator(((nbr_jour*24)/8)/3)          # Les petites graduations de n en n
+    minorLocator = MultipleLocator(((nbr_jour*24)/8)/3)          # Les sous-graduations de n en n
    
     fig, ax = plt.subplots()
     plt.plot(x, y, '.-',color='black', label="Carbone")
@@ -329,7 +358,38 @@ def Afficher_humidite(start_date='2019-08-11',end_date='2019-08-25'):
     return None
 
 
-def Afficher_courbe(start_date='2019-08-11',end_date='2019-08-25'):
+def Afficher_courbe(col,doc,start_date='2019-08-11',end_date='2019-08-25'):
+    i=trouver_first_date(start_date,new_date(doc.sent_at))
+    j=trouver_last_date(end_date,new_date(doc.sent_at))
+    x = doc.sent_at.tolist()[i:j]
+    y=recup(col,doc)
+    y = y.tolist()[i:j]
+    x,nbr_jour=abscisse(x) 
+    
+    majorLocator = MultipleLocator((nbr_jour*24)/8)           
+    majorFormatter = FormatStrFormatter('%d')
+    minorLocator = MultipleLocator(((nbr_jour*24)/8)/3)       
+   
+    fig, ax = plt.subplots()
+    plt.plot(x, y, '.-',color='black', label=str(col))
+    
+    ax.xaxis.set_major_locator(majorLocator)
+    ax.xaxis.set_major_formatter(majorFormatter)
+    ax.xaxis.set_minor_locator(minorLocator)
+    plt.xlabel('Temps (h)')
+    plt.ylabel(str(col)+" (en "+unite(col)+")")
+    
+    plt.legend(bbox_to_anchor=(0.8, 1), loc='upper left', borderaxespad=0.)
+    if start_date==end_date:
+        plt.title('Evolution de '+str(col).lower()+' du '+start_date)
+    else:
+        plt.title('Evolution de '+str(col).lower()+' entre le '+start_date+' et le '+end_date)
+    
+    plt.show()
+    return None
+
+
+def Afficher_courbe2(col,start_date='2019-08-11',end_date='2019-08-25'):
     i=trouver_first_date(start_date)
     j=trouver_last_date(end_date)
     x = date.tolist()[i:j]
@@ -341,7 +401,7 @@ def Afficher_courbe(start_date='2019-08-11',end_date='2019-08-25'):
     minorLocator = MultipleLocator(((nbr_jour*24)/8)/3)       
    
     fig, ax = plt.subplots()
-    plt.plot(x, y, '.-',color='black', label="Carbone")
+    plt.plot(x, y, '.-',color='black', label=str(col))
     y2 = temperature.tolist()[i:j]
     plt.plot(x, y2, '.-',color='blue', label="Température")
     y3 = donnee.lum.tolist()[i:j]
@@ -355,6 +415,49 @@ def Afficher_courbe(start_date='2019-08-11',end_date='2019-08-25'):
     ax.xaxis.set_major_formatter(majorFormatter)
     ax.xaxis.set_minor_locator(minorLocator)
     plt.xlabel('Temps (h)')
+    plt.ylabel(str(col)+" (en "+unite(col)+")")
+    
+    plt.legend(bbox_to_anchor=(0.8, 1), loc='upper left', borderaxespad=0.)
+    if start_date==end_date:
+        plt.title('Donnée du '+start_date)
+    else:
+        plt.title('Donnée entre le '+start_date+' et le '+end_date)
+    
+    plt.show()
+    return None
+
+
+def appeler_une_donnee(col,doc,start_date,end_date,couleur,num):
+    i=trouver_first_date(start_date,new_date(doc.sent_at.tolist()))
+    j=trouver_last_date(end_date,new_date(doc.sent_at.tolist()))
+    x = doc.sent_at.tolist()[i:j]
+    y = recup(col,doc)
+    y=y.tolist()[i:j]
+    x,nbr_jour=abscisse(x) 
+    plt.plot(x, y, '.-',color=couleur, label=str(col)+str(num))
+
+
+def Afficher_courbe_tout_donnee(col,start_date='2019-08-11',end_date='2019-08-25'):
+    nbr_jour=transformer_date(end_date)-transformer_date(start_date)+1
+    majorLocator = MultipleLocator((nbr_jour*24)/8)           
+    majorFormatter = FormatStrFormatter('%d')
+    minorLocator = MultipleLocator(((nbr_jour*24)/8)/3)       
+   
+    fig, ax = plt.subplots()
+    
+    appeler_une_donnee(col,donnee,start_date,end_date,'black','')
+    appeler_une_donnee(col,donnee1,start_date,end_date,'blue',1)
+    appeler_une_donnee(col,donnee2,start_date,end_date,'green',2)
+    appeler_une_donnee(col,donnee3,start_date,end_date,'yellow',3)
+    appeler_une_donnee(col,donnee4,start_date,end_date,'cyan',4)
+    appeler_une_donnee(col,donnee5,start_date,end_date,'orange',5)
+    appeler_une_donnee(col,donnee6,start_date,end_date,'pink',6)
+
+    ax.xaxis.set_major_locator(majorLocator)
+    ax.xaxis.set_major_formatter(majorFormatter)
+    ax.xaxis.set_minor_locator(minorLocator)
+    plt.xlabel('Temps (h)')
+    plt.ylabel(str(col)+" (en "+unite(col)+")")
     
     plt.legend(bbox_to_anchor=(0.8, 1), loc='upper left', borderaxespad=0.)
     if start_date==end_date:
@@ -384,48 +487,11 @@ def droite_verticale(abscisse,max,min):      # On défini une fonction qui nous 
     x=[abscisse for k in range(3)]
     y=[min,(max+min)/2,max]
     return x,y
-    
-
-def transformer_heure(h):
-    h=h/10000
-    hint=int(h)                 # heure entière
-    h2=(h-hint)*100
-    hmin=int(h2)                # minute
-    h3=(h2-hmin)*100
-    hs=int(h3)                  # seconde
-    h=hint+(hmin/60)+(hs/3600)
-    return h
-
-
-def abscisse(x):            # Transformer '2019-08-17 12:50:26 +2:00' en 12,83
-    D,H=new_date(x),new_heure(x)
-    L=[]
-    n=len(D)
-    date=D[0]
-    i=0
-    index=[]
-    m=0
-    
-    for k in range(n):      # Compter le len pour les différents jours, puis rajouter 24 pour le jour d'après
-        if date!=D[k]:
-            date=D[k]
-            index.append(k)
-            i=1
-        else:
-            i+=1
-            
-    for k in range(n):      
-        if k in index:
-            m+=1
-
-        heure=transformer_heure(H[k])+m*24
-        L.append(heure)
-    return L,len(index)+1
 
 
 def Afficher_carbone_stat(start_date='2019-08-11',end_date='2019-08-25'):
-    i=trouver_first_date(start_date)
-    j=trouver_last_date(end_date)
+    i=trouver_first_date(start_date,new_date(doc.sent_at.tolist()))
+    j=trouver_last_date(end_date,new_date(doc.sent_at.tolist()))
     x = date.tolist()[i:j]
     y = carbone.tolist()[i:j]
     plt.plot(x, y, '.-',color='black', label="Carbone (en g)")
@@ -458,19 +524,19 @@ def Afficher_carbone_stat(start_date='2019-08-11',end_date='2019-08-25'):
 
     # Sur le même modèle, on généralise cette fonction pour toutes les colonnes
 
-def recup(var):
+def recup(var,doc):
     if var=='Carbone':
-        return donnee.co2
+        return doc.co2
     elif var=='Température':
-        return donnee.temp
+        return doc.temp
     elif var=='Luminosité':
-        return donnee.lum
+        return doc.lum
     elif var=='Bruit':
-        return donnee.noise
+        return doc.noise
     elif var=='Humidité':
-        return donnee.humidity
+        return doc.humidity
     elif var=='Humidex':
-        return donnee.temp, donnee.humidity
+        return doc.temp, doc.humidity
 
 
 UNITE={'Carbone':'g','Température':'°C','Luminosité':'lx','Bruit':'dB','Humidité':'%','Humidex':'°C'}
@@ -481,17 +547,17 @@ def unite(col):
     return Unite
 
 
-def Afficher_stat(col,start_date='2019-08-11',end_date='2019-08-25',anomalie=False):
-    i=trouver_first_date(start_date)
-    j=trouver_last_date(end_date)
-    x = date.tolist()[i:j]
+def Afficher_stat(col,doc,start_date='2019-08-11',end_date='2019-08-25',anomalie=False):
+    i=trouver_first_date(start_date,new_date(doc.sent_at.tolist()))
+    j=trouver_last_date(end_date,new_date(doc.sent_at.tolist()))
+    x = doc.sent_at.tolist()[i:j]
     x,nbr_jour=abscisse(x) 
     
     if col=='Humidex':
-        a,b = recup(col)
-        y=humidex(a.tolist(),b.tolist(),start_date,end_date)
+        a,b = recup(col,doc)
+        y=humidex(a.tolist(),b.tolist(),doc,start_date,end_date)
     else:
-        y = recup(col)
+        y = recup(col,doc)
         y=y.tolist()[i:j]   
 
     majorLocator = MultipleLocator((nbr_jour*24)/8)              # Les grandes graduations de n en n
@@ -506,7 +572,10 @@ def Afficher_stat(col,start_date='2019-08-11',end_date='2019-08-25',anomalie=Fal
     ax.xaxis.set_minor_locator(minorLocator)
     
     if anomalie:
-        appeler_anomalie(x,y)
+        if j-i==len(donnee) and col!='Humidex':
+            appeler_anomalie2(x,y,col,doc)
+        else:
+            appeler_anomalie(x,y)
     
     plt.xlabel('Temps (h)')
     plt.ylabel(str(col)+" (en "+str(unite(col))+")")
@@ -538,8 +607,6 @@ def Afficher_stat(col,start_date='2019-08-11',end_date='2019-08-25',anomalie=Fal
     plt.plot(x,moy2,color='red',label='moyenne = '+str(moy_valeur))
     plt.plot(x,e_sup,color='orange',label='écart-type = '+str(e_valeur))
     plt.plot(x,e_inf,color='orange')
-    #plt.plot(x,v_sup,color='cyan',label='variance = '+str(v_valeur))
-    #plt.plot(x,v_inf,color='cyan')
     
     plt.legend(bbox_to_anchor=(0.75, 1), loc='upper left', borderaxespad=0.)
     
@@ -568,10 +635,10 @@ def humidex_unite(Tair,hum):
     return H
 
 
-def humidex(temp,hum,start_date,end_date):
+def humidex(temp,hum,doc,start_date,end_date):
     H=[]
-    i=trouver_first_date(start_date)
-    j=trouver_last_date(end_date)
+    i=trouver_first_date(start_date,new_date(doc.sent_at.tolist()))
+    j=trouver_last_date(end_date,new_date(doc.sent_at.tolist()))
     temp,hum=temp[i:j],hum[i:j]
     n=len(temp)
     for k in range(n):
@@ -582,10 +649,10 @@ def humidex(temp,hum,start_date,end_date):
     # Courbe de l'évolution de l'indice humidex :
 
 
-def Afficher_humidex(humidex,start_date,end_date):
-    i=trouver_first_date(start_date)
-    j=trouver_last_date(end_date)
-    x = date.tolist()[i:j]
+def Afficher_humidex(humidex,doc,start_date,end_date):
+    i=trouver_first_date(start_date,new_date(doc.sent_at.tolist()))
+    j=trouver_last_date(end_date,new_date(doc.sent_at.tolist()))
+    x = doc.sent_at.tolist()[i:j]
     x,nbr_jour=abscisse(x)  
 
     majorLocator = MultipleLocator((nbr_jour*24)/8)              # Les grandes graduations de n en n
@@ -635,13 +702,13 @@ def Afficher_humidex(humidex,start_date,end_date):
 # Courbe avec la corrélation de deux variables :
 
 
-def Afficher_correlation(col1,col2,start_date,end_date,anomalie=False):     # col1 et col2 sont les noms de colonne
-    i=trouver_first_date(start_date)
-    j=trouver_last_date(end_date)
-    donnee1=recup(col1)                                     # On récupère les colonnes (listes) de donnée
-    donnee2=recup(col2)
-    x = date.tolist()[i:j]
-    y = donnee1.tolist()[i:j]
+def Afficher_correlation(col1,col2,doc,start_date,end_date,anomalie=False):     # col1 et col2 sont les noms de colonne
+    i=trouver_first_date(start_date,new_date(doc.sent_at.tolist()))
+    j=trouver_last_date(end_date,new_date(doc.sent_at.tolist()))
+    cor1=recup(col1,doc)                                     # On récupère les colonnes (listes) de donnée
+    cor2=recup(col2,doc)
+    x = doc.sent_at.tolist()[i:j]
+    y = cor1.tolist()[i:j]
     x,nbr_jour=abscisse(x)  
 
     majorLocator = MultipleLocator((nbr_jour*24)/8)              # Les grandes graduations de n en n
@@ -654,33 +721,39 @@ def Afficher_correlation(col1,col2,start_date,end_date,anomalie=False):     # co
     ax.plot(x, y, color='tab:green')
     ax.tick_params(axis='y', labelcolor='tab:green')
     if anomalie:
-        appeler_anomalie(x,y)
+        if j-i==len(donnee):
+            appeler_anomalie2(x,y,col1,doc)
+        else:
+            appeler_anomalie(x,y)
     
     ax.xaxis.set_major_locator(majorLocator)
     ax.xaxis.set_major_formatter(majorFormatter)
     ax.xaxis.set_minor_locator(minorLocator)
 
-    y2 = donnee2.tolist()[i:j]
+    y2 = cor2.tolist()[i:j]
     ax2 = ax.twinx() 
     ax2.set_ylabel(str(col2)+" (en "+str(unite(col2))+")", color='tab:blue')
     ax2.plot(x, y2, color='tab:blue')
     ax2.tick_params(axis='y', labelcolor='tab:blue')
     
     if anomalie:
-        appeler_anomalie(x,y2)
+        if j-i==len(donnee):
+            appeler_anomalie2(x,y2,col2,doc)
+        else:
+            appeler_anomalie(x,y2)
     
     indice="{0:.2f}".format(f.correlation(y,y2))
     if anomalie:
         plt.legend(bbox_to_anchor=(0.75, 1), loc='upper left', borderaxespad=0.)
         if nbr_jour==1:
-            plt.title("Corrélation entre "+str(col1).lower()+" et "+str(col2).lower()+" du "+start_date[8:10]+" août 2019 avec anomalie\n")
+            plt.title("Corrélation entre "+str(col1).lower()+" et "+str(col2).lower()+" : "+indice+"\ndu "+start_date[8:10]+" août 2019 avec anomalie\n")
         else:
-            plt.title("Corrélation entre "+str(col1).lower()+" et "+str(col2).lower()+" entre le "+start_date[8:10]+" et le "+end_date[8:10]+" août 2019 avec anomalie\n")
+            plt.title("Corrélation entre "+str(col1).lower()+" et "+str(col2).lower()+" : "+indice+"\nentre le "+start_date[8:10]+" et le "+end_date[8:10]+" août 2019 avec anomalie\n")
     else:
         if nbr_jour==1:
-            plt.title("Corrélation entre "+str(col1).lower()+" et "+str(col2).lower()+" du "+start_date[8:10]+" août 2019\n")
+            plt.title("Corrélation entre "+str(col1).lower()+" et "+str(col2).lower()+" : "+indice+"\ndu "+start_date[8:10]+" août 2019\n")
         else:
-            plt.title("Corrélation entre "+str(col1).lower()+" et "+str(col2).lower()+" entre le "+start_date[8:10]+" et le "+end_date[8:10]+" août 2019\n")
+            plt.title("Corrélation entre "+str(col1).lower()+" et "+str(col2).lower()+" : "+indice+"\nentre le "+start_date[8:10]+" et le "+end_date[8:10]+" août 2019\n")
     fig.tight_layout()
     plt.show()
     return None
@@ -689,26 +762,46 @@ def Afficher_correlation(col1,col2,start_date,end_date,anomalie=False):     # co
 
 #_______________________________________________________________________________
 
-    # Anomalie :
 
-def is_anomalie(col,id):
-    C=col
-    m=moyenne(col)
-    if abs(col[id]-m)>ecart_type(col):
-        return True
-    return False
-
-
-def find_anomalie_id_value(col,first,last):
-    C=col[first:last]
+#Detection anomalies avec distance interquartile
+ 
+def interQ_detect(document,col):
+    q1 = recup(col,document).quantile(0.25)
+    q3 = recup(col,document).quantile(0.75)
+    iqr = q3-q1 #distance Interquartile 
+    limite_inf  = q1-1.5*iqr
+    limite_sup = q3+1.5*iqr
+    n=len(document.index)
     l=[]
     L=[]
-    n=len(C)
+    a=0
+    column=' '
+    if col=='Bruit':
+        a=2
+        column='noise'
+    elif col=='Température':
+        a=3
+        column='temp'
+    elif col=='Humidité':
+        a=4
+        column='humidity'
+    elif col=='Luminosité':
+        a=5
+        column='lum'
+    elif col=='Carbone':
+        a=6
+        column='co2'
     for i in range(n):
-        if is_anomalie(col,i):
-            l.append(i)
-            L.append(col[i])
-    return l,L
+        if document.loc[document.index[i],column]<= limite_inf or document.loc[document.index[i],column]>= limite_sup :
+            l.append(document.iloc[i,a])        #liste de valeurs associées à la variable choisie entre les deux dates
+            L.append(document.iloc[i,7])        #liste de dates associées à la variable choisie entre les deux dates
+
+    date=Heure(new_heure(L))
+    D=[]
+    for k in range (len(L)):
+        D.append(date[k]+24*(int(L[k][8:10])-11))
+    return(l,D)
+
 
 
     # Dérive :
@@ -717,26 +810,30 @@ def derive(L,T):                # Il faut que len(T)=len(L)>0
     l=[]
     n=len(L)
     for k in range(n-1):
-        x=(float(L[k+1])-float(L[k]))/(float(T[k+1])-float(T[k]))
+        try:
+            x=(float(L[k+1])-float(L[k]))/(float(T[k+1])-float(T[k]))
+        except:
+            x=(float(L[k+1])-float(L[k]))/(float(T[k+1])-float(T[k])+0.1)
         l.append(x)
     return l
 
 
+
     # Courbe anomalie :
 
-def Afficher_derive2(col,start_date='2019-08-11',end_date='2019-08-25'):  
-    i=trouver_first_date(start_date)
-    j=trouver_last_date(end_date)
-    donnee1=recup(col)                                     # On récupère les colonnes (listes) de donnée
-    x = date.tolist()[i:j]
-    y = donnee1.tolist()[i:j]
+def Afficher_derive2(col,doc,start_date='2019-08-11',end_date='2019-08-25'):  
+    i=trouver_first_date(start_date,new_date(doc.sent_at.tolist()))
+    j=trouver_last_date(end_date,new_date(doc.sent_at.tolist()))
+    y=recup(col,doc)                                     # On récupère les colonnes (listes) de donnée
+    x = doc.sent_at.tolist()[i:j]
+    y = y.tolist()[i:j]
     x,nbr_jour=abscisse(x)  
 
     if col=='Humidex':
-        a,b = recup(col)
+        a,b = recup(col,doc)
         y=humidex(a.tolist(),b.tolist(),start_date,end_date)
     else:
-        y = recup(col)
+        y = recup(col,doc)
         y=y.tolist()[i:j]   
 
 
@@ -762,7 +859,7 @@ def Afficher_derive2(col,start_date='2019-08-11',end_date='2019-08-25'):
     
     mean=f.mediane(y2)       
     moy=f.moyenne(y2)
-    e=ecart_type(y2)*2
+    e=f.ecart_type(y2)*3
     
     mean_valeur="{0:.2f}".format(mean)      # "{0:.2f}".format(nombre) permet d'arrondir nombre à deux chiffre après la virgule
     moy_valeur="{0:.2f}".format(moy) 
@@ -785,10 +882,11 @@ def Afficher_derive2(col,start_date='2019-08-11',end_date='2019-08-25'):
     return None
 
 
+
 # On peut donc considérer que tout les point de la dérivé en dehors de 2*écart-type de la moyenne est une anomalie
 
 def is_anomalie3(der,m,ecart,id):          # der est la liste des derive
-    if abs(der[id])>2*ecart+m:
+    if abs(der[id])>3*ecart+m:
         return True
     return False
 
@@ -808,17 +906,17 @@ def anomalie_list3(col,T):
 
 
 
-def Afficher_colonne_avec_anomalie(col,start_date='2019-08-11',end_date='2019-08-25'):
-    i=trouver_first_date(start_date)
-    j=trouver_last_date(end_date)
-    x = date.tolist()[i:j]
+def Afficher_colonne_avec_anomalie(col,doc,start_date='2019-08-11',end_date='2019-08-25'):
+    i=trouver_first_date(start_date,new_date(doc.sent_at.tolist()))
+    j=trouver_last_date(end_date,new_date(doc.sent_at.tolist()))
+    x = doc.sent_at.tolist()[i:j]
     x,nbr_jour=abscisse(x) 
     
     if col=='Humidex':
-        a,b = recup(col)
+        a,b = recup(col,doc)
         y=humidex(a.tolist(),b.tolist(),start_date,end_date)
     else:
-        y = recup(col)
+        y = recup(col,doc)
         y=y.tolist()[i:j]   
 
     majorLocator = MultipleLocator((nbr_jour*24)/8)              # Les grandes graduations de n en n
@@ -845,7 +943,7 @@ def Afficher_colonne_avec_anomalie(col,start_date='2019-08-11',end_date='2019-08
     return None
 
 
-# On peut donc considérer que tout les point de la dérivé en dehors de n*écart-type de la moyenne est une anomalie. Plus n est grand et plus le pic de l'anomalie détecté est grande, donc plus la valeur est anormalement éloignée. On fait donc la même chose mais en fonction de n
+""" On peut donc considérer que tout les point de la dérivé en dehors de n*écart-type de la moyenne est une anomalie. Plus n est grand et plus le pic de l'anomalie détecté est grande, donc plus la valeur est anormalement éloignée. On fait donc la même chose mais en fonction de n """
 
 
 def is_anomalie_n(der,m,ecart,id,n):          # der est la liste des derive
@@ -872,17 +970,17 @@ def anomalie_list_n(col,T,n):
 n=10
 
 
-def Afficher_colonne_avec_anomalie_n(col,start_date='2019-08-11',end_date='2019-08-25'):
-    i=trouver_first_date(start_date)
-    j=trouver_last_date(end_date)
-    x = date.tolist()[i:j]
+def Afficher_colonne_avec_anomalie_n(col,doc,start_date='2019-08-11',end_date='2019-08-25'):
+    i=trouver_first_date(start_date,new_date(doc.sent_at.tolist()))
+    j=trouver_last_date(end_date,new_date(doc.sent_at.tolist()))
+    x = doc.sent_at.tolist()[i:j]
     x,nbr_jour=abscisse(x) 
     
     if col=='Humidex':
-        a,b = recup(col)
-        y=humidex(a.tolist(),b.tolist(),start_date,end_date)
+        a,b = recup(col,doc)
+        y=humidex(a.tolist(),b.tolist(),doc,start_date,end_date)
     else:
-        y = recup(col)
+        y = recup(col,doc)
         y=y.tolist()[i:j]   
 
     majorLocator = MultipleLocator((nbr_jour*24)/8)              # Les grandes graduations de n en n
@@ -892,12 +990,11 @@ def Afficher_colonne_avec_anomalie_n(col,start_date='2019-08-11',end_date='2019-
     fig, ax = plt.subplots()
     plt.plot(x, y, '.-',color='blue', label=str(col),zorder=1)
     
-    k,j,i=anomalie_list3(y,x)
-    plt.scatter(i,j,marker='o',color='red',label="anomalie",zorder=2,s=3**2)
-    for p in range(3,n+1):
-        k,j,i=anomalie_list_n(y,x,p)
-        plt.scatter(i,j,marker='o',color='red',zorder=p,s=(p+1)**2)
-    
+    if j-i==len(donnee) and col!='Humidex':
+        appeler_anomalie2(x,y,col,doc)
+    else:
+        appeler_anomalie(x,y)
+        
     ax.xaxis.set_major_locator(majorLocator)
     ax.xaxis.set_major_formatter(majorFormatter)
     ax.xaxis.set_minor_locator(minorLocator)
@@ -918,12 +1015,24 @@ def Afficher_colonne_avec_anomalie_n(col,start_date='2019-08-11',end_date='2019-
 
 # Plutôt que de réécrire toutes les fonctions, on peut choisir d'ajouter ou non l'affichage des anomalies dans les autres fonctions d'affichage
 
+
 def appeler_anomalie(x,y):
     k,j,i=anomalie_list3(y,x)
     plt.scatter(i,j,marker='o',color='red',label="anomalie",zorder=2,s=3**2)
     for p in range(3,n+1):
         k,j,i=anomalie_list_n(y,x,p)
         plt.scatter(i,j,marker='o',color='red',zorder=p,s=(p+1)**2)
+    return None
+
+
+def appeler_anomalie2(x,y,col,doc):
+    k,j,i=anomalie_list3(y,x)
+    plt.scatter(i,j,marker='o',color='red',label="anomalie",zorder=2,s=3**2)
+    for p in range(3,n+1):
+        k,j,i=anomalie_list_n(y,x,p)
+        plt.scatter(i,j,marker='o',color='red',zorder=p,s=(p+1)**2)
+    j,i=interQ_detect(doc,col)
+    plt.scatter(i,j,marker='o',color='green',label="anomalie2",zorder=2,s=3**2)
     return None
 
 

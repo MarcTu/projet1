@@ -1,7 +1,7 @@
 import numpy as np
 
 
-        # Fonctions de base
+    # Fonctions de base
 
 
 # Operation :
@@ -209,7 +209,7 @@ def covariance(X,Y):
     n=len(X)
     m=len(Y)
     if n!=m:
-        return None
+        return 0
     S=0
     x=moyenne(X)
     y=moyenne(Y)
@@ -228,30 +228,6 @@ def ecart_type(l):
 #____________________________________________________________
 
 
-# Indice humidex :
-
-
-def humidex_unite(Tair,hum):
-    H=Tair+(5/9)*(6.112*10**(7.5*Tair/(237.7+Tair))*(hum/100)-10)
-    return H
-
-
-def humidex(temp,hum,start_date,end_date):
-    H=[]
-    i=trouver_first_date(start_date)
-    j=trouver_last_date(end_date)
-    temp,hum=temp[i:j],hum[i:j]
-    n=len(temp)
-    for k in range(n):
-        H.append(humidex_unite(temps[k],hum[k]))
-    H=humidex_unite(temperature,Trosee)
-    return H
-    
-    
-
-#____________________________________________________________
-
-
 # Indice de corrélation :
 
 def correlation(X,Y):
@@ -260,40 +236,5 @@ def correlation(X,Y):
     var_y=variance(Y)
     r= cov/((var_x*var_y)**(1/2))
     return r
-
-
-def Afficher_correlation(X,Y):
-    r=correlation(X,Y)
-    print("L'indice de corrélation est :")
-    print(r)
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 
 

@@ -17,6 +17,15 @@ def sortir(message='Exit'):
     print("____________________________________________________________________________________\n\n\n")
     return sys.exit()
 
+    # End
+
+def end():
+    print("\n\n\n____________________________________________________________________________________")
+    print("\n                                          FIN                                          ")
+    print("____________________________________________________________________________________\n\n\n")
+    sys.exit()
+    return None
+
 
     # Fonction pour vérifier la date
 
@@ -42,7 +51,7 @@ def bonne_date(date,endroit):
 
 print("Ce script permet d'effectuer une action pour une variable en fonction du temps sur la plage voulue \n(sans les dates précisées, la plage sera automatiquement prise entre le '2019-08-11' et le '2019-08-25')\n")
 print("Pour cela, veuillez écrire sous la forme : \n   python projet.py <action> <variable> <date de début> <date de fin>")
-print("En cas de bug, pour quitter le programme, tapez 'sortir'\n")
+print("En cas de bug, pour quitter le programme, tapez 'exit'\n")
 
 
 
@@ -92,7 +101,7 @@ while act_test==None:
     action=input("Cette action n'existe pas.\nVeuillez la réecrire (ou tapez 'action' pour voir la liste des actions) : ")
     if action=='action':
         action=input("Veuillez choisir entre les variables : "+S+" : ")
-    if action=='sortir':
+    if action=='exit':
         sortir()
 
 
@@ -158,7 +167,7 @@ def def_var(var):
         var=input("Cette variable : "+var+", n'existe pas.\nVeuillez la réecrire (ou tapez 'variable' pour voir la liste des variables) : ")
         if var=='variable':
             var=input("Veuillez choisir entre les variables : "+S+" : ")
-        if var=='sortir':
+        if var=='exit':
             sortir()
         for L in VAR_repetition:
             if var in L:
@@ -208,10 +217,10 @@ else:
         elif choix=='3':
             var1=input("Veuillez réécrire la première variable : ")
             var2=input("Veuillez réécrire la seconde variable. La première variable étant "+var1+" : ")
-        elif choix=='sortir':
+        elif choix=='exit':
             sortir()
         else:
-            print(" \nCe choix : "+choix+", n'existe pas. Pour quitter, tapez sortir\n ")
+            print(" \nCe choix : "+choix+", n'existe pas. Pour quitter, tapez exit\n ")
 
 
     # A présent, la ou les variables sont bien définies
@@ -269,10 +278,10 @@ while start_date[8:10]>end_date[8:10]:
         start_date,end_date=end_date,start_date
     elif choix=='5':
         start_date,end_date='2019-08-11','2019-08-25'
-    elif choix=='sortir':
+    elif choix=='exit':
         sortir()
     else:
-        print(" \nCe choix : "+choix+", n'existe pas. Pour quitter, tapez sortir\n ")
+        print(" \nCe choix : "+choix+", n'existe pas. Pour quitter, tapez exit\n ")
 
 
 # A présent les dates sont aux bon format et dans l'ordre
@@ -297,55 +306,95 @@ else:
 print("entre le "+start_date+" et le "+end_date+"\n")  
 
 
-entrer=input("Tapez 1, pour voir les anomalies\nSinon, press 'entrer' pour continuer\n     ")      
-    # Ceci permet d'afficher les messages avant de charger les courbes
-if entrer=='sortir':
+#_______________________________________________________________________________
+
+    # Petite pause : Ceci permet d'afficher les messages avant de charger les courbes
+
+
+entrer=input("Tapez 'a', pour voir les anomalies\nSinon, press 'entrer' pour continuer\n     ")      
+if entrer=='exit':
     sortir()
+
+
+#_______________________________________________________________________________
+
+    # Choix du capteur
+
+
+from random import randint
+doc=p.donnee
+choix=input("Si vous souhaitez voir un capteur en particulier, veuillez saisir le numéro du capteur désiré (de 1 à 6)\nTapez 0, pour afficher tous les capteurs (seul l'action 'display' supporte cette ordre)\nSinon, press 'entrer' pour continuer\n     ")
+if choix=='1' or choix=='2' or choix=='3' or choix=='4' or choix=='5' or choix=='6':
+    print("Vous avez choisi le capteur "+choix)     # Afficher directement le choix, pour que ce soit claire
+
+if choix=='exit':
+    sortir()
+
+if choix=='0':      # Si action=='display', Afficher_courbe_tout_donnee, sinon affiche n'importe quel capteur
+    if k==1 and var!='Humidex':
+        p.Afficher_courbe_tout_donnee(var,start_date,end_date)
+        if entrer=='a':
+            print("Pour des raisons pratiques et de lisibilité, les anomalies ne seront pas affichés\nMerci de votre compréhension !'")
+        end()
+    else:
+        choix=str(randint(1,6))
+        print("Pour des raisons pratiques et de lisibilité, seul le capteur "+choix+" (choisi au hasard), va être affiché\nMerci de votre compréhension !")     
+if choix=='1':
+    doc=p.donnee1
+elif choix=='2':
+    doc=p.donnee2
+elif choix=='3':
+    doc=p.donnee3
+elif choix=='4':
+    doc=p.donnee4
+elif choix=='5':
+    doc=p.donnee5
+elif choix=='6':
+    doc=p.donnee6
+    
+
+
+#_______________________________________________________________________________
+
+
+    # Fin de l'intéraction avec le scripte, début de l'affichage
 
 
 
 if k==1:        # Ici, on affiche une courbe
-    if entrer!='1':         # Sans les anomalies
-        if var=='Carbone':
-            p.Afficher_carbone(start_date,end_date)
-        elif var=='Température':
-            p.Afficher_temperature(start_date,end_date)
-        elif var=='Luminosité':
-            p.Afficher_luminosite(start_date,end_date)
-        elif var=='Bruit':
-            p.Afficher_bruit(start_date,end_date)
-        elif var=='Humidité':
-            p.Afficher_humidite(start_date,end_date)
-        elif var=='Humidex':
-            temp=p.donnee.temp.tolist()
-            hum=p.donnee.humidity.tolist()
-            humidex=p.humidex(temp,hum,start_date,end_date)
-            p.Afficher_humidex(humidex,start_date,end_date)
+    if entrer!='a':         # Sans les anomalies
+        if var=='Humidex':
+            temp=p.doc.temp.tolist()
+            hum=p.doc.humidity.tolist()
+            humidex=p.humidex(temp,hum,doc,start_date,end_date)
+            p.Afficher_humidex(humidex,doc,start_date,end_date)
+        else:
+            p.Afficher_courbe(var,doc,start_date,end_date)
     else:               # Affichage des courbes avec anomalies
-        p.Afficher_colonne_avec_anomalie_n(var,start_date,end_date)
+        p.Afficher_colonne_avec_anomalie_n(var,doc,start_date,end_date)
     
 elif k==2:        # Ici, on affiche une courbe avec les valeurs statistiques : min, max, écart-type, moyenne, variance, médiane
-    p.Afficher_stat(var,start_date,end_date,entrer=='1')
+    p.Afficher_stat(var,doc,start_date,end_date,entrer=='a')
     
     
 elif k==3:       # Ici, on affiche une courbe avec les deux variables avec leur indice de corrélation
     # On récupère la colonne de la variable
-    col1=p.recup(var1)
-    col2=p.recup(var2)
+    col1=p.recup(var1,doc).tolist()
+    col2=p.recup(var2,doc).tolist()
         
     corr=f.correlation(col1,col2)
 
     print("\nL'indice de corrélation entre "+var1+" et "+var2+" sur toute la période vaut :\n          "+str(corr))
-    p.Afficher_correlation(var1,var2,start_date,end_date,entrer=='1')
+    p.Afficher_correlation(var1,var2,doc,start_date,end_date,entrer=='a')
 
 
+
+#_______________________________________________________________________________
 
     # Lorsque le script se termine, il est important de l'indiquer
 
+end()
 
-print("\n\n\n____________________________________________________________________________________")
-print("\n                                          FIN                                          ")
-print("____________________________________________________________________________________\n\n\n")
 
 
 
