@@ -314,7 +314,10 @@ print("entre le "+start_date+" et le "+end_date+"\n")
 entrer=input("Tapez 'a', pour voir les anomalies\nSinon, press 'entrer' pour continuer\n     ")      
 if entrer=='exit':
     sortir()
-
+if entrer=='Bureau':
+    print("\n\n")
+    p.periode_presence_bureau()
+    end()
 
 #_______________________________________________________________________________
 

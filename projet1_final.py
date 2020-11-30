@@ -853,11 +853,74 @@ def appeler_anomalie2(x,y,col,doc):
         k,j,i=anomalie_list_n(y,x,p)
         plt.scatter(i,j,marker='o',color='red',zorder=p,s=(p+1)**2)
     j,i=interQ_detect(doc,col)
-    plt.scatter(i,j,marker='o',color='green',label="anomalie2",zorder=2,s=3**2)
+    plt.scatter(i,j,marker='o',color='purple',label="anomalie2",zorder=2,s=3**2)
     return None
 
 
 
+#_______________________________________________________________________________
+
+    # Trouver les période d'occupation des bureaux
+
+def periode_presence_bureau():
+    document,col=donnee,'Bruit'
+    q1 = recup(col,document).quantile(0.25)
+    q3 = recup(col,document).quantile(0.75)
+    iqr = q3-q1 #distance Interquartile 
+    limite_inf  = q1-1.5*iqr
+    limite_sup = q3+1.5*iqr
+    n=len(document.index)
+    l=[]
+    L=[]
+    a=0
+    column=' '
+    if col=='Bruit':
+        a=2
+        column='noise'
+    elif col=='Température':
+        a=3
+        column='temp'
+    elif col=='Humidité':
+        a=4
+        column='humidity'
+    elif col=='Luminosité':
+        a=5
+        column='lum'
+    elif col=='Carbone':
+        a=6
+        column='co2'
+    for i in range(n):
+        if document.loc[document.index[i],column]<= limite_inf or document.loc[document.index[i],column]>= limite_sup :
+            l.append(document.iloc[i,a])        #liste de valeurs associées à la variable choisie entre les deux dates
+            L.append(document.iloc[i,7])        #liste de dates associées à la variable choisie entre les deux dates
+
+        # L=liste de date+heure
+
+    D=[]
+    heure1,heure2=[],[]
+    date_possible=[]
+    date_list=[]
+    for date in L:
+        if transformer_date(date) not in date_possible:
+            date_possible.append(transformer_date(date))
+            date_list.append(date)
+
+    for date in date_list:
+        i=trouver_first_date(date,new_date(L))
+        j=trouver_last_date(date,new_date(L))
+        x,y=L[i],L[j-1]
+        heure1.append(transformer_heure(int(x[11:13]+x[14:16]+x[17:19])))
+        heure2.append(transformer_heure(int(y[11:13]+y[14:16]+y[17:19])))
+        D.append("Jour "+str(transformer_date(x))[6:8]+" : occupation de "+str(transformer_heure(int(x[11:13]+x[14:16]+x[17:19])))+" à "+str(transformer_heure(int(y[11:13]+y[14:16]+y[17:19])))+"\n")
+    S=""
+    for date in D:
+        S+=date
+    print(S)
+    
+    moy1="{0:.2f}".format(f.moyenne(heure1))
+    moy2="{0:.2f}".format(f.moyenne(heure2))
+    print("\nLa moyenne des occupations sur un jour est de : "+str(moy1)+"h à "+str(moy2)+"h")
+    return None
 
 
 
