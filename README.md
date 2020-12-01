@@ -1,4 +1,4 @@
-Le script à exécuter est 'projet.py'
+Le script à exécuter dans l'invite de commande est 'projet.py'
 
 Il prend en module 'fonctions.py' et 'projet1_final.py'
 
