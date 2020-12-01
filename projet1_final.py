@@ -909,9 +909,10 @@ def periode_presence_bureau():
         i=trouver_first_date(date,new_date(L))
         j=trouver_last_date(date,new_date(L))
         x,y=L[i],L[j-1]
-        heure1.append(transformer_heure(int(x[11:13]+x[14:16]+x[17:19])))
-        heure2.append(transformer_heure(int(y[11:13]+y[14:16]+y[17:19])))
-        D.append("Jour "+str(transformer_date(x))[6:8]+" : occupation de "+str(transformer_heure(int(x[11:13]+x[14:16]+x[17:19])))+" à "+str(transformer_heure(int(y[11:13]+y[14:16]+y[17:19])))+"\n")
+        first_heure,last_heure=transformer_heure(int(x[11:13]+x[14:16]+x[17:19])),transformer_heure(int(y[11:13]+y[14:16]+y[17:19]))
+        heure1.append(first_heure)
+        heure2.append(last_heure)
+        D.append("Jour "+str(transformer_date(x))[6:8]+" : occupation de "+str("{0:.2f}".format(first_heure))+"h à "+str("{0:.2f}".format(last_heure))+"h\n")
     S=""
     for date in D:
         S+=date
